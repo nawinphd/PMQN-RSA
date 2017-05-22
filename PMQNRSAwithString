@@ -1,0 +1,189 @@
+package com.phd.mywork;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.math.BigInteger;
+import java.util.Random;
+
+public class PMQNRSAwithString {
+
+	int bitlength = 1024;  
+    // int blocksize = 1024; 
+    //blocksize in byte   
+    private BigInteger P;
+    private BigInteger Q; 
+    //private BigInteger q;  
+    private BigInteger n;  
+    private BigInteger phi;  
+    private BigInteger e;  
+    private BigInteger d;  
+    private Random r;  
+     /** 
+     * Init public and private keys 
+     */  
+    	public PMQNRSAwithString() {  
+	            //Random Number Generation using the JavaAPI
+    		    r = new Random();  
+    		    
+    		    //Randomly selecting two prime number's using the JAVA API
+             // get two big primes  
+        		P = BigInteger.probablePrime(bitlength, r); 
+        		Q = BigInteger.probablePrime(bitlength, r);
+        		
+        		if(P.equals(Q))
+        		{
+        			System.out.println("Prime P and Q are same , but it should be distinict");
+        			System.exit(1);
+        		}
+        		
+        		// N = P1 * P2
+	            n = P.multiply(Q);
+	            
+	            //Phi = ( (p1 ^ i) -1 * (P2-1)  )
+	            int M=0;
+	            int N=0;
+	           //System.out.println("Please enter the number of power required"); 
+	           System.out.println("Please enter the P power number M::"); 
+	           BufferedReader br=new BufferedReader(new InputStreamReader(System.in));
+	           try {
+				M = Integer.parseInt(br.readLine().toString());
+				System.out.println("Please enter the Q power number N::");
+				N = Integer.parseInt(br.readLine().toString());
+	           } catch (NumberFormatException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+	           } catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+	           }
+	           
+	           
+	           //p1^2  - 1 * q -1
+		        phi = P.pow(M).subtract(BigInteger.ONE).multiply(Q.pow(N).subtract(BigInteger.ONE));
+  	       
+		        //phi = p1.subtract(BigInteger.ONE).multiply(p2.subtract(BigInteger.ONE));
+            
+		        // compute the exponent necessary for encryption (private key)  
+	           e = BigInteger.probablePrime(bitlength/2, r);  
+	           while (phi.gcd(e).compareTo(BigInteger.ONE) > 0 && e.compareTo(phi) < 0 ) {  
+            e.add(BigInteger.ONE);  
+	           }  
+	           // compute public key  
+	           d = e.modInverse(phi);  
+	           
+	           System.out.println("The P Value                        = "+ P);
+	           System.out.println("The Q Value                        = "+ Q);
+	           System.out.println("The N Value P*Q                    = "+ n);
+	           System.out.println("The Phi value ("+P+"^"+M+"-1)*(+"+Q+"^"+N+"-1)    = "+phi);
+	           System.out.println("The Public key [e,n]               = ["+e+","+n+"]");
+	           System.out.println("The Private key [d,n]              = ["+d+","+n+"]");
+	           
+    }  
+    public PMQNRSAwithString(BigInteger e, BigInteger d, BigInteger N) {  
+        this.e = e;  
+        this.d = d;  
+        this.n = N;  
+    }  
+    public static void main (String[] args) { 
+	   long startTime = System.currentTimeMillis();
+	   //Generating Public and Private Key
+	   PMQNRSAwithString PMQNRSA = new PMQNRSAwithString();  
+	   System.out.println("The bitlength "+ PMQNRSA.bitlength);
+	   long endTime = System.currentTimeMillis();
+	  //System.out.println(" Key Generation Time :"+ (endTime-startTime));
+	 
+	   //Reading the input message or string 
+	   String teststring=new String();
+        try{ 
+
+    BufferedReader br=new BufferedReader(new InputStreamReader(System.in));
+	   System.out.println("Please provide the testing String\\Message... Please enter button after message finish");
+	   teststring = br.readLine();  //teststring = "SVUNIVERSITY";
+        System.out.println("String Provided for Encryption \t::"+teststring);  
+        System.out.println("String in Bytes\t\t\t\t::"+bytesToString(teststring.getBytes()));  
+	      }catch(Exception ex){}
+       
+        
+        
+        // encrypt or cipher process
+        long startEncyTime = System.currentTimeMillis();  
+        byte[] encrypted = PMQNRSA.encrypt(teststring.getBytes());                    
+        System.out.println("Cipher String\\Message in Bytes\t\t::"+bytesToString(encrypted));  
+        long endEncyTime = System.currentTimeMillis();
+        
+        
+        
+        // decrypt  or decipher process
+        long startDecyTime = System.currentTimeMillis();  
+        byte[] decrypted = PMQNRSA.decrypt(encrypted);        
+        System.out.println("Decrypted String\\Message \t\t\t::"+new String(decrypted));  
+        long endDecyTime = System.currentTimeMillis();  
+	      
+	       
+	       //Summary details for user
+	       System.out.println("\nSummary details of time in millsecond(ms)");
+	       System.out.println("Key Generation Time\t\t::\t"+(endTime-startTime) +"\tms");
+	       System.out.println("Encryption Time\t\t\t::\t"+(endEncyTime-startEncyTime)+"\tms");
+	       System.out.println("Decryption Time\t\t\t::\t"+(endDecyTime-startDecyTime)+"\tms");
+    }  
+         /** 
+     * Converts a byte array into its String representations 
+     * @param encrypted 
+     * @return 
+     */  
+    private  static String bytesToString(byte[] encrypted) {  
+        String test = "";  
+        for (byte b : encrypted) {  
+            test += Byte.toString(b);  
+        }  
+        return test;  
+    }   
+    /** 
+     * encrypt byte array 
+     * @param message 
+     * @return 
+     */  
+    public byte[] encrypt(byte[] message) {       
+        return (new BigInteger(message)).modPow(e, n).toByteArray();  
+    }   
+    /** 
+     * decrypt byte array 
+     * @param message 
+     * @return 
+     */  
+    public byte[] decrypt(byte[] message) {  
+        return (new BigInteger(message)).modPow(d, n).toByteArray();  
+    }        
+    
+    
+    public static BigInteger lcd(BigInteger m, BigInteger n) {
+		
+		m = m.abs();
+		n = n.abs();
+		if (m.equals(BigInteger.ZERO) || n.equals(BigInteger.ZERO)) {
+			return BigInteger.ZERO;
+		} else {
+			BigInteger gcd = gcd(m,n);
+			return m.divide(gcd).multiply(n);
+		}
+	}
+    
+    public static BigInteger gcd(BigInteger m, BigInteger n) {
+
+		m = m.abs();
+		n = n.abs();
+		if (m.equals(BigInteger.ZERO)) {
+			return n;
+		} else if (n.equals(BigInteger.ZERO)) {
+			return m;
+		} else if (m.compareTo(n) > 0) {
+			return gcd(n, m.remainder(n));
+		} else if (m.compareTo(n) < 0) {
+			return gcd(m, n.remainder(m));
+		} else {
+			return m;
+		}
+	}
+
+}
